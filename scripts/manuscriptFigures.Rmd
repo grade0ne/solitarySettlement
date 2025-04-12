@@ -1,0 +1,246 @@
+---
+title: "manuscriptFigures"
+author: "Alex Mendelson"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, echo=FALSE, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2)
+library(patchwork)
+```
+
+
+
+```{r data, include = FALSE, echo = FALSE}
+# Data Pre-processing
+# Treatment and score are factored as strings from integers and ordered appropriately. A new column "Larva" is added so individual larvae can be tracked through time.
+
+data <- read.csv("../data/ficoSettlementData.csv")
+
+data$Treatment <- factor(data$Treatment, 
+                         levels = c(1, 2, 3, 4), 
+                         labels = c("Conspecific", "Nat Biof", "Lab Biof", "Control"))
+data$Score <- factor(data$Score,
+                     levels = c(0, 1, 2, 3, 4, 5),
+                     labels = c("Missing", "Juvenile", "Swimming", "Stuck", "Dead", "Part Meta"))
+
+data$Score <- factor(data$Score, levels = c("Juvenile", "Part Meta", "Swimming", "Stuck", "Missing", "Dead"))
+
+Larva <- paste(data$Family, data$Plate, data$Well, sep="-")
+data <- cbind(data, Larva)
+
+glimpse(data)
+```
+
+# Figure 1
+Six-panel cumulative settlement graph including all four treatments 5-10 dpf.
+
+```{r fig1Data, echo=FALSE, include = FALSE}
+fig1Data <- data %>%
+  group_by(Family, DPF, Treatment) %>%
+  summarise(
+    settlement = (sum(Score == "Juvenile")/n()) * 100
+  )
+```
+
+### Color
+
+```{r fig1PlotColor, echo=FALSE}
+
+# color
+
+ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape = Treatment)) +
+  geom_line(stat = "identity", linewidth = 1) +
+  geom_point(stat = "identity", size = 2, stroke = 1) +
+  scale_shape_manual(values = c(
+    "Control" = 1,
+    "Conspecific" = 16,
+    "Nat Biof" = 17,
+    "Lab Biof" = 15
+  )) +
+  facet_wrap(~ Family, labeller = labeller(Family = function(x) paste("Family", x))) +
+  labs(
+    x = "Days Post-Fertilization",
+    y = "Cumulative Settlement %",
+    color = "Substrate",
+    shape = "Substrate"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12)
+  )
+```
+
+### Grey-scale
+
+```{r fig1PlotGrey, echo = FALSE}
+ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape = Treatment)) +
+  geom_line(stat = "identity", linewidth = 1) +
+  geom_point(stat = "identity", size = 2, stroke = 1) +
+  scale_shape_manual(values = c(
+    "Control" = 1,
+    "Conspecific" = 16,
+    "Nat Biof" = 17,
+    "Lab Biof" = 15
+  )) +
+  scale_color_manual(values = c(
+    "Control" = "black",
+    "Conspecific" = "grey20",
+    "Nat Biof" = "grey50",
+    "Lab Biof" = "grey70"
+  )) +
+  facet_wrap(~ Family, labeller = labeller(Family = function(x) paste("Family", x))) +
+  labs(
+    x = "Days Post-Fertilization",
+    y = "Cumulative Settlement %",
+    color = "Substrate",
+    shape = "Substrate"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12)
+  )
+```
+
+### Shape only
+
+```{r fig1PlotShape, echo = FALSE}
+ggplot(fig1Data, aes(x = DPF, y = settlement, shape = Treatment)) +
+  geom_line(stat = "identity", linewidth = 1, color = "black") +
+  geom_point(stat = "identity", size = 2, stroke = 1, color = "black") +
+  scale_shape_manual(values = c(
+    "Control" = 1,
+    "Conspecific" = 16,
+    "Nat Biof" = 17,
+    "Lab Biof" = 15
+  )) +
+  facet_wrap(~ Family, labeller = labeller(Family = function(x) paste("Family", x))) +
+  labs(
+    x = "Days Post-Fertilization",
+    y = "Cumulative Settlement %",
+    shape = "Substrate"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12)
+  )
+```
+
+# Figure 2
+Six-panel bar graph of 10 dpf score distribution in six families.
+```{r fig2Data, echo = FALSE, include = FALSE}
+fig2Data <- data %>%
+  filter(DPF == 10) %>%
+  group_by(Family, Treatment, Score) %>%
+  summarise(count = n()) %>%
+  group_by(Family, Treatment) %>%
+  mutate(percent = 100 * count / sum(count)) %>%
+  ungroup() %>%
+  complete(Family, Treatment, Score, fill = list(percent = 0, count = 0))
+```
+
+### Color
+
+```{r fig2PlotColor, echo = FALSE}
+ggplot(fig2Data, aes(x = Treatment, y = percent, fill = Score)) +
+  geom_bar(stat = "identity", width = 0.75, position = position_dodge(0.8), color = "black") +
+  scale_x_discrete(labels = c("Cs", "Fb", "Lb", "Ct")) +
+  scale_fill_manual(values = c("Juvenile" = "#CC6677", 
+                               "Part Meta" = "#E0AC3F",
+                               "Swimming" = "#88CCEE",
+                               "Stuck" = "#44AA99",
+                               "Missing" = "#117733",
+                               "Dead" = "#332288")) +
+  labs(
+    y = "Percent of larvae",
+    x = "Treatment",
+    fill = "Score"
+  ) +
+  facet_wrap(
+    ~Family,
+    labeller = labeller(Family = function(x) paste("Family", x))
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA),
+    panel.spacing.y = unit(2, "lines")
+  )
+```
+
+### Grey-scale
+
+```{r fig2PlotGrey, echo = FALSE}
+ggplot(fig2Data, aes(x = Treatment, y = percent, fill = Score)) +
+  geom_bar(stat = "identity", width = 0.75,position = position_dodge(0.8), color = "black") +
+  scale_fill_grey(start = 0.2, end = 0.8) +
+  scale_x_discrete(labels = c("Cs", "Fb", "Lb", "Ct")) +
+  labs(
+    y = "Percent of larvae",
+    x = "Treatment",
+    fill = "Score"
+  ) +
+  facet_wrap(
+    ~Family,
+    labeller = labeller(Family = function(x) paste("Family", x))
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA),
+    panel.spacing.y = unit(2, "lines")
+  )
+```
+
+# Figure 3
+Summed 10 dpf settlement percentages in top two treatments (conspecific and field biofilm) for all six families. Horizontal line at 100%.
+```{r fig3Data, echo = FALSE, include = FALSE}
+fig3Data <- data %>%
+  filter(DPF==10) %>%
+  group_by(Family, Treatment) %>%
+  summarise(
+    juvenile = (sum(Score == "Juvenile") / n()) * 100
+    )
+
+fig3Data <- fig3Data %>%
+  filter(Treatment %in% c("Conspecific", "Nat Biof")) %>%
+  group_by(Family) %>%
+  summarise(
+    sumSet = sum(juvenile)
+  )
+```
+```{r fig3Plot, echo = FALSE}
+ggplot(fig3Data, aes(x = Family, y = sumSet)) +
+  geom_bar(stat = "identity", fill = "darkgrey", color = "black", width = 0.3) +
+  geom_hline(yintercept = 100, linetype = "dashed", color = "black", linewidth = 0.5) +
+  scale_x_continuous(breaks = 1:6) +
+  labs(
+    x = "Family",
+    y = "Summed Settlement (%)"
+  ) +
+
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    panel.border = element_rect(color = "black", fill = NA),
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12)
+)
+```

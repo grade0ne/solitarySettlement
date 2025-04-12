@@ -10,7 +10,6 @@
 #       5	- Partially Metamorphosed ('Part Meta')
 # 3. Breakdown of each scoring category by treatment for each family
 # 4. How often do part meta larvae become juveniles?
-# 5. The 100% rule of F/A, by the numbers
 # -------------
 
 # -------------
@@ -127,7 +126,3 @@ metaLarvae <- data %>%
             Failure = sum(!change1d),
             'Perc Success' = sum(change1d) / n() * 100,
             .groups = "drop")
-
-# -------------
-# 5
-

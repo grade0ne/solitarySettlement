@@ -41,6 +41,4 @@ ggplot(FicoGraph, aes(x=dpf, y=mean, color = treatment)) +
   labs(x="Days Post Fertilization (DPF)", y="Cumulative Settlement (%)") +
   scale_color_discrete(name = "Treatment", labels = custom_legend_order) +
   theme_bw() +
-  guides(linetype=FALSE)  
-
-
+  guides(linetype=FALSE)
