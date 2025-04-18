@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggplot2)
 library(patchwork)
+library(ggtext)
 ```
 
 
@@ -47,6 +48,18 @@ fig1Data <- data %>%
   summarise(
     settlement = (sum(Score == "Juvenile")/n()) * 100
   )
+
+first_family <- unique(fig1Data$Family)[1]
+
+label_data <- fig1Data %>%
+  filter(Family == first_family) %>%
+  group_by(Treatment) %>%
+  arrange(DPF) %>%
+  slice(4) %>%
+  ungroup()
+
+label_data <- label_data %>%
+  mutate(label_y = settlement + 10)
 ```
 
 
@@ -92,10 +105,10 @@ ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape = Treatme
     "Lab Biof" = 15
   )) +
   scale_color_manual(values = c(
-    "Control" = "black",
-    "Conspecific" = "grey20",
-    "Nat Biof" = "grey50",
-    "Lab Biof" = "grey70"
+    "Control" = "grey60",
+    "Conspecific" = "black",
+    "Nat Biof" = "grey40",
+    "Lab Biof" = "grey50"
   )) +
   scale_linetype_manual(values = c(
     "Control" = "22",
@@ -103,6 +116,12 @@ ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape = Treatme
     "Nat Biof" = "solid",
     "Lab Biof" = "solid"
   )) +
+  geom_text(
+    data = label_data,
+    aes(x = DPF, y = label_y, label = Treatment),
+    inherit.aes = FALSE,
+    size = 3.5
+  ) +
   facet_wrap(~ Family, labeller = labeller(Family = function(x) paste("Family", x))) +
   labs(
     x = "Days Post-Fertilization",
@@ -166,11 +185,22 @@ fig2DataAvg <- fig2Data %>%
     mean_percent = mean(percent),
     SE = sd(percent) / sqrt(n())
   )
+
+fig2DataAvg <- fig2DataAvg %>%
+  mutate(ScoreLabel = recode(Score,
+    "Juvenile" = "S",
+    "Part Meta" = "IS",
+    "Swimming" = "Sw",
+    "Stuck" = "St",
+    "Missing" = "M",
+    "Dead" = "D"
+  ))
+
 ```
 
-### Color (colorblind-friendly pallete, Paul Tol)
+### Legend in plot
 
-```{r fig2PlotColor, echo = FALSE}
+```{r fig2PlotInsideLeg, echo = FALSE}
 ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
   geom_bar(stat = "identity", width = 0.75, position = position_dodge(0.8), color = "black") +
   scale_x_discrete(labels = c("Conspecific", "Field Biofilm", "Lab Biofilm", "Control")) +
@@ -192,6 +222,7 @@ ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
     x = "Treatment",
     fill = "Score"
   ) +
+  guides(fill = guide_legend(ncol = 2)) +
   theme_minimal() +
   theme(
     panel.grid.major = element_blank(),
@@ -199,28 +230,46 @@ ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
     panel.border = element_rect(color = "black", fill = NA),
     panel.spacing.y = unit(2, "lines"),
     axis.title.y = element_text(margin = margin(r = 8)),
-    axis.title.x = element_text(margin = margin(t = 8))
+    axis.title.x = element_text(margin = margin(t = 8)),
+    legend.position = c(0.8, 0.85),
+    legend.background = element_rect(fill = "white", color = "black"),
+    legend.key.size = unit(0.6, "lines")
   )
 ```
 
-### Grey-scale
+### Legend & key under bars
 
-```{r fig2PlotGrey, echo = FALSE}
+```{r fig2PlotBarKey, echo = FALSE}
 ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
-  geom_bar(stat = "identity", width = 0.75,position = position_dodge(0.8), color = "black") +
-  scale_fill_grey(start = 0, end = 0.8, labels = c("Juvenile" = "Settled", 
-                               "Part Meta" = "Incompletely Settled",
-                               "Swimming" = "Swimming",
-                               "Stuck" = "Stuck",
-                               "Missing" = "Missing",
-                               "Dead" = "Dead")) +
+  geom_bar(stat = "identity", width = 0.75, position = position_dodge(0.8), color = "black") +
   scale_x_discrete(labels = c("Conspecific", "Field Biofilm", "Lab Biofilm", "Control")) +
+  scale_fill_manual(values = c("Juvenile" = "#CC6677", 
+                               "Part Meta" = "#E0AC3F",
+                               "Swimming" = "#88CCEE",
+                               "Stuck" = "#44AA99",
+                               "Missing" = "#117733",
+                               "Dead" = "#332288"),
+                    labels = c(
+                               "Juvenile" = "Settled (S)", 
+                               "Part Meta" = "Incompletely Settled (IS)",
+                               "Swimming" = "Swimming (Sw)",
+                               "Stuck" = "Stuck (St)",
+                               "Missing" = "Missing (M)",
+                               "Dead" = "Dead (D)"
+                               )) +
   geom_errorbar(aes(ymin = mean_percent - SE, ymax = mean_percent + SE), position = position_dodge(0.8), width = 0.5) +
+    geom_text(
+    aes(label = ScoreLabel, y = 2),
+    position = position_dodge(0.8),
+    vjust = 2.3,
+    size = 3
+  ) +
   labs(
     y = "Percent of larvae",
     x = "Treatment",
     fill = "Score"
   ) +
+  guides(fill = guide_legend(ncol = 2)) +
   theme_minimal() +
   theme(
     panel.grid.major = element_blank(),
@@ -228,7 +277,12 @@ ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
     panel.border = element_rect(color = "black", fill = NA),
     panel.spacing.y = unit(2, "lines"),
     axis.title.y = element_text(margin = margin(r = 8)),
-    axis.title.x = element_text(margin = margin(t = 8))
+    axis.title.x = element_text(margin = margin(t = 8)),
+    legend.position = "inside",
+    legend.position.inside = c(0.77, 0.85),
+    legend.background = element_rect(fill = "white"),
+    legend.key.size = unit(0.8, "lines"),
+    legend.title.align = 0.5
   )
 
 ```
@@ -257,9 +311,10 @@ ggplot(fig3Data, aes(x = Family, y = sumSet)) +
   geom_bar(stat = "identity", fill = "darkgrey", color = "black", width = 0.3) +
   geom_hline(yintercept = 100, linetype = "dashed", color = "black", linewidth = 0.5) +
   scale_x_continuous(breaks = 1:6) +
+  scale_y_continuous(limits = c(0,200)) +
   labs(
     x = "Family",
-    y = "Summed Settlement\nconspecific & biofilm treatments (%)"
+    y = "Summed settlement\nconspecific & field biofilm treatments (%)"
   ) +
 
   theme_minimal() +
