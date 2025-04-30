@@ -1,5 +1,5 @@
 ---
-title: "manuscriptFigures"
+title: "manuscriptFigures04292025"
 author: "Alex Mendelson"
 date: "`r Sys.Date()`"
 output:
@@ -9,6 +9,7 @@ output:
 
 ```{r setup, echo=FALSE, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(error = FALSE)
 
 library(tidyverse)
 library(ggplot2)
@@ -40,7 +41,6 @@ glimpse(data)
 ```
 
 # Figure 1
-Six-panel cumulative settlement graph including all four treatments 5-10 dpf.
 
 ```{r fig1Data, echo=FALSE, include = FALSE}
 fig1Data <- data %>%
@@ -63,43 +63,12 @@ label_data <- label_data %>%
 ```
 
 
-
-```{r fig1PlotColor, echo=FALSE, include = FALSE}
-
-# color
-
-ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape = Treatment)) +
+```{r fig1PlotGrey, echo = FALSE, fig.width=8, fig.height=5}
+fig1 <- ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape = Treatment, linetype = Treatment, fill = Treatment)) +
   geom_line(stat = "identity", linewidth = 1) +
   geom_point(stat = "identity", size = 2, stroke = 1) +
   scale_shape_manual(values = c(
-    "Control" = 1,
-    "Conspecific" = 16,
-    "Nat Biof" = 17,
-    "Lab Biof" = 15
-  )) +
-  facet_wrap(~ Family, labeller = labeller(Family = function(x) paste("Family", x))) +
-  labs(
-    x = "Days Post-Fertilization",
-    y = "Cumulative Settlement %",
-    color = "Substrate",
-    shape = "Substrate"
-  ) +
-  theme_minimal() +
-  theme(
-    panel.grid = element_blank(),
-    panel.border = element_rect(color = "black", fill = NA),
-    axis.text = element_text(size = 10),
-    axis.title = element_text(size = 12)
-  )
-```
-
-
-```{r fig1PlotGrey, echo = FALSE}
-ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape = Treatment, linetype = Treatment)) +
-  geom_line(stat = "identity", linewidth = 1) +
-  geom_point(stat = "identity", size = 2, stroke = 1) +
-  scale_shape_manual(values = c(
-    "Control" = 1,
+    "Control" = 21,
     "Conspecific" = 16,
     "Nat Biof" = 17,
     "Lab Biof" = 15
@@ -107,7 +76,13 @@ ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape = Treatme
   scale_color_manual(values = c(
     "Control" = "grey60",
     "Conspecific" = "black",
-    "Nat Biof" = "grey40",
+    "Nat Biof" = "grey30",
+    "Lab Biof" = "grey50"
+  )) +
+  scale_fill_manual(values = c(
+    "Control" = "white",       # white fill for solid circle
+    "Conspecific" = "black",
+    "Nat Biof" = "grey30",
     "Lab Biof" = "grey50"
   )) +
   scale_linetype_manual(values = c(
@@ -124,8 +99,8 @@ ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape = Treatme
   ) +
   facet_wrap(~ Family, labeller = labeller(Family = function(x) paste("Family", x))) +
   labs(
-    x = "Days Post-Fertilization",
-    y = "Cumulative Settlement %",
+    x = "Days post-fertilization",
+    y = "Cumulative settlement (%)",
     color = "Substrate",
     shape = "Substrate",
     linetype = "Substrate"
@@ -135,41 +110,20 @@ ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape = Treatme
     panel.grid = element_blank(),
     panel.border = element_rect(color = "black", fill = NA),
     axis.text = element_text(size = 10),
-    axis.title = element_text(size = 12)
+    axis.title = element_text(size = 12),
+    legend.position = "none",
+    panel.spacing.x = unit(.6, "cm"),
+    strip.text = element_text(size = 10)
   )
-```
 
-
-```{r fig1PlotShape, echo = FALSE, include = FALSE}
-ggplot(fig1Data, aes(x = DPF, y = settlement, shape = Treatment)) +
-  geom_line(stat = "identity", linewidth = 1, color = "black") +
-  geom_point(stat = "identity", size = 2, stroke = 1, color = "black") +
-  scale_shape_manual(values = c(
-    "Control" = 1,
-    "Conspecific" = 16,
-    "Nat Biof" = 17,
-    "Lab Biof" = 15
-  )) +
-  facet_wrap(~ Family, labeller = labeller(Family = function(x) paste("Family", x))) +
-  labs(
-    x = "Days Post-Fertilization",
-    y = "Cumulative Settlement %",
-    shape = "Substrate"
-  ) +
-  theme_minimal() +
-  theme(
-    panel.grid = element_blank(),
-    panel.border = element_rect(color = "black", fill = NA),
-    axis.text = element_text(size = 10),
-    axis.title = element_text(size = 12)
-  )
+print(fig1)
 ```
 
 \newpage
 
 # Figure 2
-Bar plot of 10 dpf score distribution in six families (+/- SE).
-```{r fig2Data, echo = FALSE, include = FALSE}
+
+```{r fig2Data, echo = FALSE, include = FALSE, error = FALSE}
 fig2Data <- data %>%
   filter(DPF == 10) %>%
   group_by(Family, Treatment, Score) %>%
@@ -198,48 +152,54 @@ fig2DataAvg <- fig2DataAvg %>%
 
 ```
 
-### Legend in plot
 
-```{r fig2PlotInsideLeg, echo = FALSE}
-ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
-  geom_bar(stat = "identity", width = 0.75, position = position_dodge(0.8), color = "black") +
-  scale_x_discrete(labels = c("Conspecific", "Field Biofilm", "Lab Biofilm", "Control")) +
-  scale_fill_manual(values = c("Juvenile" = "#CC6677", 
-                               "Part Meta" = "#E0AC3F",
-                               "Swimming" = "#88CCEE",
-                               "Stuck" = "#44AA99",
-                               "Missing" = "#117733",
-                               "Dead" = "#332288"),
-                    labels = c("Juvenile" = "Settled", 
-                               "Part Meta" = "Incompletely Settled",
-                               "Swimming" = "Swimming",
-                               "Stuck" = "Stuck",
-                               "Missing" = "Missing",
-                               "Dead" = "Dead")) +
-  geom_errorbar(aes(ymin = mean_percent - SE, ymax = mean_percent + SE), position = position_dodge(0.8), width = 0.5) +
-  labs(
-    y = "Percent of larvae",
-    x = "Treatment",
-    fill = "Score"
-  ) +
-  guides(fill = guide_legend(ncol = 2)) +
-  theme_minimal() +
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_rect(color = "black", fill = NA),
-    panel.spacing.y = unit(2, "lines"),
-    axis.title.y = element_text(margin = margin(r = 8)),
-    axis.title.x = element_text(margin = margin(t = 8)),
-    legend.position = c(0.8, 0.85),
-    legend.background = element_rect(fill = "white", color = "black"),
-    legend.key.size = unit(0.6, "lines")
-  )
-```
 
-### Legend & key under bars
+```{r fig2PlotBarKey, echo = FALSE, fig.width=8, fig.height=5}
+# ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
+#   geom_bar(stat = "identity", width = 0.75, position = position_dodge(0.8), color = "black") +
+#   scale_x_discrete(labels = c("Conspecific", "Field Biofilm", "Lab Biofilm", "Control")) +
+#   scale_fill_manual(values = c("Juvenile" = "#CC6677", 
+#                                "Part Meta" = "#E0AC3F",
+#                                "Swimming" = "#88CCEE",
+#                                "Stuck" = "#44AA99",
+#                                "Missing" = "#117733",
+#                                "Dead" = "#332288"),
+#                     labels = c(
+#                                "Juvenile" = "Settled (S)", 
+#                                "Part Meta" = "Incompletely Settled (IS)",
+#                                "Swimming" = "Swimming (Sw)",
+#                                "Stuck" = "Stuck (St)",
+#                                "Missing" = "Missing (M)",
+#                                "Dead" = "Dead (D)"
+#                                )) +
+#   geom_errorbar(aes(ymin = mean_percent - SE, ymax = mean_percent + SE), position = position_dodge(0.8), width = 0.5) +
+#     geom_text(
+#     aes(label = ScoreLabel, y = 2),
+#     position = position_dodge(0.8),
+#     vjust = 2.3,
+#     size = 3
+#   ) +
+#   labs(
+#     y = "Percent of larvae",
+#     x = "Treatment",
+#     fill = "Score"
+#   ) +
+#   guides(fill = guide_legend(ncol = 2)) +
+#   theme_minimal() +
+#   theme(
+#     panel.grid.major = element_blank(),
+#     panel.grid.minor = element_blank(),
+#     panel.border = element_rect(color = "black", fill = NA),
+#     panel.spacing.y = unit(2, "lines"),
+#     axis.title.y = element_text(margin = margin(r = 8)),
+#     axis.title.x = element_text(margin = margin(t = 8)),
+#     legend.position = "inside",
+#     legend.position.inside = c(0.77, 0.85),
+#     legend.background = element_rect(fill = "white"),
+#     legend.key.size = unit(0.8, "lines"),
+#     legend.title.align = 0.5
+#   )
 
-```{r fig2PlotBarKey, echo = FALSE}
 ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
   geom_bar(stat = "identity", width = 0.75, position = position_dodge(0.8), color = "black") +
   scale_x_discrete(labels = c("Conspecific", "Field Biofilm", "Lab Biofilm", "Control")) +
@@ -261,12 +221,12 @@ ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
     geom_text(
     aes(label = ScoreLabel, y = 2),
     position = position_dodge(0.8),
-    vjust = 2.3,
+    vjust = 2.5,
     size = 3
   ) +
   labs(
     y = "Percent of larvae",
-    x = "Treatment",
+    x = "Substrate",
     fill = "Score"
   ) +
   guides(fill = guide_legend(ncol = 2)) +
@@ -274,7 +234,9 @@ ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
   theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
-    panel.border = element_rect(color = "black", fill = NA),
+    panel.border = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black"),
     panel.spacing.y = unit(2, "lines"),
     axis.title.y = element_text(margin = margin(r = 8)),
     axis.title.x = element_text(margin = margin(t = 8)),
@@ -290,7 +252,7 @@ ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
 \newpage
 
 # Figure 3
-Summed 10 dpf settlement percentages in top two treatments (conspecific and field biofilm) for all six families. Horizontal line at 100%.
+
 ```{r fig3Data, echo = FALSE, include = FALSE}
 fig3Data <- data %>%
   filter(DPF==10) %>%
@@ -306,7 +268,7 @@ fig3Data <- fig3Data %>%
     sumSet = sum(juvenile)
   )
 ```
-```{r fig3Plot, echo = FALSE}
+```{r fig3Plot, echo = FALSE, fig.width=5, fig.height=4}
 ggplot(fig3Data, aes(x = Family, y = sumSet)) +
   geom_bar(stat = "identity", fill = "darkgrey", color = "black", width = 0.3) +
   geom_hline(yintercept = 100, linetype = "dashed", color = "black", linewidth = 0.5) +
@@ -320,7 +282,9 @@ ggplot(fig3Data, aes(x = Family, y = sumSet)) +
   theme_minimal() +
   theme(
     panel.grid = element_blank(),
-    panel.border = element_rect(color = "black", fill = NA),
+    panel.border = element_blank(),
+    axis.line.x = element_line(color = "black"),
+    axis.line.y = element_line(color = "black"),
     axis.text = element_text(size = 10),
     axis.title = element_text(size = 12)
 )
