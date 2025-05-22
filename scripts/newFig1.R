@@ -30,7 +30,7 @@ data_percent <- data %>%
 model <- lmer(Settlement ~ Treatment + (1|Family), data = data_percent)
 summary(model)
 
-emmeans(model, pairwise ~ Treatment, adjust = "holm")
+emmeans(model, pairwise ~ Treatment, adjust = "tukey")
 
 tukey_glht <- glht(model, linfct = mcp(Treatment = "Tukey"))
 
