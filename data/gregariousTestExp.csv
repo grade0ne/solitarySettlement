@@ -1,0 +1,13 @@
+Family,Treatment,Settled,Total
+Family 1,Adult,7,8
+Family 1,Mussel,2,8
+Family 1,Control,0,8
+Family 2,Adult,8,8
+Family 2,Mussel,1,8
+Family 2,Control,0,8
+Family 3,Adult,5,8
+Family 3,Mussel,0,8
+Family 3,Control,0,8
+Family 4,Adult,6,8
+Family 4,Mussel,0,7
+Family 4,Control,0,8
