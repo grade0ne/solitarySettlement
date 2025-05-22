@@ -1,10 +1,9 @@
-library(car)
 library(tidyverse)
-library(lme4)
-library(lmerTest)
-library(emmeans)
-library(moments)
-library(multcomp)
+library(multcompView)
+library(FSA)
+
+#################################################
+# Data import
 
 data <- read.csv("data/gregariousTestExp.csv")
 
@@ -18,39 +17,38 @@ data_percent <- data %>%
     Settlement = (Settled / Total) * 100
   )
 
-# friedman.test(Settlement ~ Treatment | Family, data = data_percent)
-# 
-# pairwise.wilcox.test(
-#   x = data_percent$Settlement,
-#   g = data_percent$Treatment,
-#   paired = TRUE,
-#   p.adjusted.method = "bonferroni"
-# )
+#################################################
+# Kruskal-Wallis & Holm-corrected Dunn
 
-model <- lmer(Settlement ~ Treatment + (1|Family), data = data_percent)
-summary(model)
+kruskal.test(Settlement ~ Treatment, data = data_percent)
 
-emmeans(model, pairwise ~ Treatment, adjust = "tukey")
+dunn_result <- dunnTest(Settlement ~ Treatment, data = data_percent, method = "holm")
 
-tukey_glht <- glht(model, linfct = mcp(Treatment = "Tukey"))
+#################################################
+# Box plot
 
-letters <- cld(tukey_glht)
+dunn_df <- dunn_result$res
 
-letters_df <- data.frame(
-  Treatment = names(letters$mcletters$Letters),
-  Letter = letters$mcletters$Letters
+pvals <- dunn_df$P.adj
+names(pvals) <- gsub(" - ", "-", dunn_df$Comparison)
+
+group_letters <- multcompLetters(pvals)$Letters
+
+letter_df <- data.frame(
+  Treatment = names(group_letters),
+  Letter = group_letters
 )
 
-y_pos <- aggregate(Settlement ~ Treatment, data = data_percent, max)
-
-plot_letters <- merge(letters_df, y_pos, by = "Treatment")
-plot_letters$Settlement <- plot_letters$Settlement + 5
-
+y_pos <- data_percent %>%
+  group_by(Treatment) %>%
+  summarise(Settlement = max(Settlement)) %>%
+  left_join(letter_df, by = "Treatment") %>%
+  mutate(Settlement = Settlement + 5)
 
 ggplot(data_percent, aes(x = Treatment, y = Settlement)) +
   geom_boxplot(stat = "boxplot", width = 0.5) +
   geom_point(aes(shape = Family), size = 2) +
-  geom_text(data = plot_letters, aes(label = Letter, y = Settlement), vjust = 0) +
+  geom_text(data = y_pos, aes(label = Letter, y = Settlement), vjust = 0) +
   labs(x = "", y = "Settlement (%)") +
   theme_minimal() +
   theme(
