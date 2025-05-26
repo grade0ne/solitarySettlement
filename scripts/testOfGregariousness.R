@@ -25,7 +25,18 @@ kruskal.test(Settlement ~ Treatment, data = data_percent)
 dunn_result <- dunnTest(Settlement ~ Treatment, data = data_percent, method = "holm")
 
 #################################################
-# Box plot
+# t-test
+
+data_noctrl_wide <- data_percent %>%
+  filter(Treatment != "Control") %>%
+  droplevels() %>%
+  select(-Settled, -Total) %>%
+  pivot_wider(names_from = Treatment, values_from = Settlement)
+
+t.test(data_noctrl_wide$`Adult Tube`, data_noctrl_wide$Mussel, paired = TRUE)
+
+#################################################
+# Box plot (KW w/ Dunn)
 
 dunn_df <- dunn_result$res
 
@@ -49,6 +60,26 @@ ggplot(data_percent, aes(x = Treatment, y = Settlement)) +
   geom_boxplot(stat = "boxplot", width = 0.5) +
   geom_point(aes(shape = Family), size = 2) +
   geom_text(data = y_pos, aes(label = Letter, y = Settlement), vjust = 0) +
+  labs(x = "", y = "Settlement (%)") +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.line = element_line(size = .5),
+    legend.position = c(0.8, 0.8),
+    legend.background = element_rect(fill = "white", color = "white"),
+    legend.title = element_blank()
+  )
+
+#################################################
+# Box plot (t-test)
+
+data_ttest <- data_percent %>%
+  filter(Treatment != "Control") %>%
+  droplevels()
+
+ggplot(data_ttest, aes(x = Treatment, y = Settlement)) +
+  geom_boxplot(stat = "boxplot", width = 0.5) +
+  geom_point(aes(shape = Family), size = 2) +
   labs(x = "", y = "Settlement (%)") +
   theme_minimal() +
   theme(
