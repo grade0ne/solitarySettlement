@@ -96,6 +96,9 @@ anova(model)
 
 emmeans(model, pairwise ~ Treatment, adjust = "tukey")
 
+#################################################
+# Box plot
+
 emm <- emmeans(model, pairwise ~ Treatment, adjust = "tukey")
 
 cld_results <- multcomp::cld(emm[[1]], Letters = letters)
@@ -127,3 +130,23 @@ ggplot(data10dpf, aes(x = Treatment, y = Settlement)) +
   )
 
 
+#################################################
+# Bar plot
+
+data_means <- data10dpf %>%
+  group_by(Treatment) %>%
+  summarise(mean = mean(Settlement),
+            se = sd(Settlement) / sqrt(n()),
+            ci = qt(0.975, df = n() - 1) * se)
+
+ggplot(data_means, aes(x = Treatment, y = mean)) +
+  geom_bar(stat = "identity", position = "dodge", fill = "darkgrey", color = "black", width = 0.5) +
+  geom_errorbar(aes(ymin = pmax(mean - ci, 0), ymax = pmin(mean + ci, 100)), width = 0.35) +
+  # geom_text(data = y_pos_lmm, aes(label = Letter, y = Settlement), vjust = 0) +
+  labs(x = "", y = "Settlement (%)") +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.line = element_line(size = .5),
+    axis.title.y = element_text(margin = margin(r = 8))
+  )

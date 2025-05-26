@@ -1,6 +1,11 @@
 library(tidyverse)
 library(multcompView)
 library(FSA)
+library(lme4)
+library(lmerTest)
+library(emmeans)
+library(car)
+library(moments)
 
 #################################################
 # Data import
@@ -34,6 +39,32 @@ data_noctrl_wide <- data_percent %>%
   pivot_wider(names_from = Treatment, values_from = Settlement)
 
 t.test(data_noctrl_wide$`Adult Tube`, data_noctrl_wide$Mussel, paired = TRUE)
+
+#################################################
+# LMM
+
+model <- lmer(Settlement ~ Treatment + (1|Family), data = data_percent)
+
+qqnorm(resid(model))
+qqline(resid(model))
+
+qqp(resid(model), distribution = "norm")
+
+hist(resid(model), breaks = 20)
+
+skewness(resid(model))
+
+fitted_val = fitted(model)
+
+plot(fitted_val, resid(model),
+     abline(h=0, lty = 2))
+
+shapiro.test(resid(model))
+
+summary(model)
+anova(model)
+
+emmeans(model, pairwise ~ Treatment, adjust = "tukey")
 
 #################################################
 # Box plot (KW w/ Dunn)
@@ -88,4 +119,35 @@ ggplot(data_ttest, aes(x = Treatment, y = Settlement)) +
     legend.position = c(0.8, 0.8),
     legend.background = element_rect(fill = "white", color = "white"),
     legend.title = element_blank()
+  )
+
+#################################################
+# Bar of means with CI
+
+data_means <- data_percent %>%
+  group_by(Treatment) %>%
+  summarise(mean = mean(Settlement),
+            se = sd(Settlement) / sqrt(n()),
+            ci = qt(0.975, df = n() - 1) * se)
+
+ggplot(data_means, aes(x = Treatment, y = mean)) +
+  geom_bar(stat = "identity", position = "dodge", fill = "darkgrey", color = "black", width = 0.5) +
+  geom_errorbar(aes(ymin = pmax(mean - ci, 0), ymax = pmin(mean + ci, 100)), width = 0.35) +
+  labs(x = "", y = "Settlement (%)") +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.line = element_line(size = .5),
+    axis.title.y = element_text(margin = margin(r = 8))
+  )
+
+ggplot(data_means, aes(x = Treatment, y = mean)) +
+  geom_bar(stat = "identity", position = "dodge", fill = "darkgrey", color = "black", width = 0.5) +
+  geom_errorbar(aes(ymin = mean - ci, ymax = mean + ci), width = 0.35) +
+  labs(x = "", y = "Settlement (%)") +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.line = element_line(size = .5),
+    axis.title.y = element_text(margin = margin(r = 8))
   )
