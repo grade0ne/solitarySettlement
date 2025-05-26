@@ -103,6 +103,12 @@ emm <- emmeans(model, pairwise ~ Treatment, adjust = "tukey")
 
 cld_results <- multcomp::cld(emm[[1]], Letters = letters)
 
+unique_letters <- sort(unique(stringr::str_trim(cld_results$.group)), decreasing = TRUE)
+reversed_letters <- setNames(letters[seq_along(unique_letters)], unique_letters)
+
+cld_results$.group <- stringr::str_trim(cld_results$.group)
+cld_results$.group <- reversed_letters[cld_results$.group]
+
 
 letter_df_lmm <- cld_results %>%
   dplyr::select(Treatment, .group) %>%
@@ -142,11 +148,11 @@ data_means <- data10dpf %>%
 ggplot(data_means, aes(x = Treatment, y = mean)) +
   geom_bar(stat = "identity", position = "dodge", fill = "darkgrey", color = "black", width = 0.5) +
   geom_errorbar(aes(ymin = pmax(mean - ci, 0), ymax = pmin(mean + ci, 100)), width = 0.35) +
-  # geom_text(data = y_pos_lmm, aes(label = Letter, y = Settlement), vjust = 0) +
-  labs(x = "", y = "Settlement (%)") +
+  geom_text(data = y_pos_lmm, aes(label = Letter, y = Settlement), vjust = 0) +
+  labs(x = "", y = "Cumulative settlement at 10 dpf (%)") +
   theme_minimal() +
   theme(
     panel.grid = element_blank(),
-    axis.line = element_line(size = .5),
+    axis.line = element_line(linewidth = .5),
     axis.title.y = element_text(margin = margin(r = 8))
   )
