@@ -30,6 +30,8 @@ data10dpf <- data %>%
             Settlement = (Juvenile / Total_Larvae) * 100)
 
 data10dpf$Family <- as.factor(data10dpf$Family)
+levels(data10dpf$Family) <- paste("Family", levels(data10dpf$Family))
+
 
 #################################################
 # KW Test
@@ -97,7 +99,7 @@ anova(model)
 emmeans(model, pairwise ~ Treatment, adjust = "tukey")
 
 #################################################
-# Box plot
+# Tukey significance letters
 
 emm <- emmeans(model, pairwise ~ Treatment, adjust = "tukey")
 
@@ -110,6 +112,7 @@ cld_results$.group <- stringr::str_trim(cld_results$.group)
 cld_results$.group <- reversed_letters[cld_results$.group]
 
 
+
 letter_df_lmm <- cld_results %>%
   dplyr::select(Treatment, .group) %>%
   dplyr::rename(Letter = .group) %>%
@@ -120,6 +123,9 @@ y_pos_lmm <- data10dpf %>%
   summarise(Settlement = max(Settlement)) %>%
   left_join(letter_df_lmm, by = "Treatment") %>%
   mutate(Settlement = Settlement + 5)
+
+#################################################
+# Box plot
 
 ggplot(data10dpf, aes(x = Treatment, y = Settlement)) +
   geom_boxplot(width = 0.5) +
@@ -146,7 +152,10 @@ data_means <- data10dpf %>%
             ci = qt(0.975, df = n() - 1) * se)
 
 ggplot(data_means, aes(x = Treatment, y = mean)) +
-  geom_bar(stat = "identity", position = "dodge", fill = "darkgrey", color = "black", width = 0.5) +
+  geom_bar(stat = "identity", position = "dodge", fill = "gray92", color = "black", width = 0.5) +
+  geom_point(data = data10dpf, aes(x = Treatment, y = Settlement, shape = Family),
+             position = position_jitter(width = 0.075, height = 0), size = 2) +
+  scale_shape_manual(values = c(1, 2, 0, 16, 17, 15)) +
   geom_errorbar(aes(ymin = pmax(mean - ci, 0), ymax = pmin(mean + ci, 100)), width = 0.35) +
   geom_text(data = y_pos_lmm, aes(label = Letter, y = Settlement), vjust = 0) +
   labs(x = "", y = "Cumulative settlement at 10 dpf (%)") +
@@ -154,5 +163,8 @@ ggplot(data_means, aes(x = Treatment, y = mean)) +
   theme(
     panel.grid = element_blank(),
     axis.line = element_line(linewidth = .5),
-    axis.title.y = element_text(margin = margin(r = 8))
+    axis.title.y = element_text(margin = margin(r = 8)),
+    legend.position = c(0.8, 0.8),
+    legend.background = element_rect(fill = "white", color = "white"),
+    legend.title = element_blank()
   )

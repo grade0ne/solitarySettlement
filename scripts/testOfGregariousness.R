@@ -149,7 +149,9 @@ y_pos_lmm <- data_means %>%
   mutate(y_pos = pmin(mean + ci, 100) + 5)
 
 ggplot(data_means, aes(x = Treatment, y = mean)) +
-  geom_bar(stat = "identity", position = "dodge", fill = "darkgrey", color = "black", width = 0.5) +
+  geom_bar(stat = "identity", position = "dodge", fill = "gray92", color = "black", width = 0.5) +
+  geom_point(data = data_percent, aes(x = Treatment, y = Settlement, shape = Family), position = position_jitter(width = 0.075, height = 0), size = 2, fill = "black", color = "black") +
+  scale_shape_manual(values = c(1, 2, 16, 17)) +
   geom_errorbar(aes(ymin = pmax(mean - ci, 0), ymax = pmin(mean + ci, 100)), width = 0.35) +
   geom_text(data = y_pos_lmm, aes(x = Treatment, y = y_pos, label = Letter), vjust = 0) +
   labs(x = "", y = "Settlement at 5 dpf (%)") +
@@ -157,5 +159,9 @@ ggplot(data_means, aes(x = Treatment, y = mean)) +
   theme(
     panel.grid = element_blank(),
     axis.line = element_line(size = .5),
-    axis.title.y = element_text(margin = margin(r = 8))
+    axis.title.y = element_text(margin = margin(r = 8)),
+    legend.position = c(0.8, 0.8),
+    legend.background = element_rect(fill = "white", color = "white"),
+    legend.title = element_blank()
   )
+
