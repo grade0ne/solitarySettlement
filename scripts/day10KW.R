@@ -95,6 +95,7 @@ shapiro.test(resid(model))
 
 summary(model)
 anova(model)
+Anova(model)
 
 emmeans(model, pairwise ~ Treatment, adjust = "tukey")
 
