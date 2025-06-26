@@ -65,6 +65,7 @@ anova(model)
 
 emmeans(model, pairwise ~ Treatment, adjust = "tukey")
 
+
 #################################################
 # Box plot (KW w/ Dunn)
 
