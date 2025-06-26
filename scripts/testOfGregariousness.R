@@ -16,8 +16,7 @@ data_percent <- data %>%
   mutate(
     Family = as.factor(Family),
     Treatment = as.factor(Treatment),
-    Treatment = fct_recode(Treatment,
-        "Adult Tube" = "Adult"),
+    Treatment = fct_recode(Treatment, "Adult Tube" = "Adult"),
     Treatment = fct_relevel(Treatment, "Adult Tube", "Mussel", "Control"),
     Settlement = (Settled / Total) * 100
   )
@@ -60,7 +59,7 @@ plot(fitted_val, resid(model),
      abline(h=0, lty = 2))
 
 shapiro.test(resid(model))
-
+  
 summary(model)
 anova(model)
 
