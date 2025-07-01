@@ -15,6 +15,7 @@ library(tidyverse)
 library(ggplot2)
 library(patchwork)
 library(ggtext)
+library(forcats)
 ```
 
 
@@ -27,7 +28,7 @@ data <- read.csv("../data/ficoSettlementData.csv")
 
 data$Treatment <- factor(data$Treatment, 
                          levels = c(1, 2, 3, 4), 
-                         labels = c("Conspecific", "Nat Biof", "Lab Biof", "Control"))
+                         labels = c("Conspecific", "Mussel", "Lab Biof", "Control"))
 data$Score <- factor(data$Score,
                      levels = c(0, 1, 2, 3, 4, 5),
                      labels = c("Missing", "Juvenile", "Swimming", "Stuck", "Dead", "Part Meta"))
@@ -59,14 +60,21 @@ label_data <- fig1Data %>%
   ungroup()
 
 label_data <- label_data %>%
-  mutate(label_y = settlement + 10)
+  mutate(DPF = 7.5,
+         label_y = settlement + 8,
+         Treatment = fct_recode(Treatment,
+                              "Conspecific" = "Conspecific",
+                              "Mussel" = "Nat Biof",
+                              "Lab biofilm" = "Lab Biof",
+                              "Control" = "Control"))
+  
 ```
 
 
 ```{r fig1PlotGrey, echo = FALSE, fig.width=8, fig.height=5}
 fig1 <- ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape = Treatment, linetype = Treatment, fill = Treatment)) +
-  geom_line(stat = "identity", linewidth = 1) +
-  geom_point(stat = "identity", size = 2, stroke = 1) +
+  geom_line(stat = "identity", linewidth = 0.6) +
+  geom_point(stat = "identity", size = 2, stroke = 0.6) +
   scale_shape_manual(values = c(
     "Control" = 21,
     "Conspecific" = 16,
@@ -95,7 +103,7 @@ fig1 <- ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape =
     data = label_data,
     aes(x = DPF, y = label_y, label = Treatment),
     inherit.aes = FALSE,
-    size = 3.5
+    size = 3
   ) +
   facet_wrap(~ Family, labeller = labeller(Family = function(x) paste("Family", x))) +
   labs(
@@ -105,18 +113,29 @@ fig1 <- ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape =
     shape = "Substrate",
     linetype = "Substrate"
   ) +
-  theme_minimal() +
+  theme_minimal(base_size = 12) +
   theme(
     panel.grid = element_blank(),
     panel.border = element_rect(color = "black", fill = NA),
-    axis.text = element_text(size = 10),
-    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 8, color = "black"),
+    axis.title = element_text(size = 10, margin = margin(r = 6)),
     legend.position = "none",
     panel.spacing.x = unit(.6, "cm"),
-    strip.text = element_text(size = 10)
+    strip.text = element_text(size = 9),
+    panel.background = element_rect(fill = "white", color = NA),
+  plot.background = element_rect(fill = "white", color = NA)
   )
 
 print(fig1)
+
+```
+
+```{r saveingPlots}
+
+ggsave("Figure 2.TIFF", plot = fig1,
+       width = 16.9, height = 11.8,
+       units = "cm", dpi = 1200, compression = "lzw")
+
 ```
 
 \newpage
@@ -141,14 +160,15 @@ fig2DataAvg <- fig2Data %>%
   )
 
 fig2DataAvg <- fig2DataAvg %>%
-  mutate(ScoreLabel = recode(Score,
-    "Juvenile" = "S",
-    "Part Meta" = "IS",
-    "Swimming" = "Sw",
-    "Stuck" = "St",
-    "Missing" = "M",
-    "Dead" = "D"
+  mutate(ScoreLabel = dplyr::recode(as.character(Score),
+    "Juvenile"   = "S",
+    "Part Meta"  = "IS",
+    "Swimming"   = "Sw",
+    "Stuck"      = "St",
+    "Missing"    = "M",
+    "Dead"       = "D"
   ))
+
 
 ```
 
@@ -200,9 +220,9 @@ fig2DataAvg <- fig2DataAvg %>%
 #     legend.title.align = 0.5
 #   )
 
-ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
-  geom_bar(stat = "identity", width = 0.75, position = position_dodge(0.8), color = "black") +
-  scale_x_discrete(labels = c("Conspecific", "Field Biofilm", "Lab Biofilm", "Control")) +
+p <- ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
+  geom_bar(stat = "identity", width = 0.85, position = position_dodge(0.8), color = "black", linewidth = 0.2) +
+  scale_x_discrete(labels = c("Conspecific", "Mussel", "Lab biofilm", "Control")) +
   scale_fill_manual(values = c("Juvenile" = "#CC6677", 
                                "Part Meta" = "#E0AC3F",
                                "Swimming" = "#88CCEE",
@@ -217,35 +237,47 @@ ggplot(fig2DataAvg, aes(x = Treatment, y = mean_percent, fill = Score)) +
                                "Missing" = "Missing (M)",
                                "Dead" = "Dead (D)"
                                )) +
-  geom_errorbar(aes(ymin = mean_percent - SE, ymax = mean_percent + SE), position = position_dodge(0.8), width = 0.5) +
+  geom_errorbar(aes(ymin = mean_percent - SE, ymax = mean_percent + SE), position = position_dodge(0.8), width = 0.5, linewidth = 0.2) +
     geom_text(
-    aes(label = ScoreLabel, y = 2),
-    position = position_dodge(0.8),
-    vjust = 2.5,
-    size = 3
+    aes(label = ScoreLabel, y = 1),
+    position = position_dodge(0.85),
+    vjust = 2,
+    size = 1.75
   ) +
   labs(
     y = "Percent of larvae",
     x = "Substrate",
     fill = "Score"
   ) +
-  guides(fill = guide_legend(ncol = 2)) +
-  theme_minimal() +
+  guides(fill = guide_legend(ncol = 1)) +
+  scale_y_continuous(limits = c(0, 100)) +
+  theme_minimal(base_size = 12) +
   theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.border = element_blank(),
-    axis.line.x = element_line(color = "black"),
-    axis.line.y = element_line(color = "black"),
+    axis.line.x = element_line(color = "black", size = 0.3),
+    axis.line.y = element_line(color = "black", size= 0.3),
     panel.spacing.y = unit(2, "lines"),
-    axis.title.y = element_text(margin = margin(r = 8)),
-    axis.title.x = element_text(margin = margin(t = 8)),
+    axis.title.y = element_text(margin = margin(r = 3), size = 9),
+    axis.title.x = element_blank(),
+    axis.text = element_text(size = 8, color = "black"),
     legend.position = "inside",
-    legend.position.inside = c(0.77, 0.85),
-    legend.background = element_rect(fill = "white"),
-    legend.key.size = unit(0.8, "lines"),
-    legend.title.align = 0.5
+    legend.position.inside = c(0.825, 0.88),
+    legend.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
+    legend.key.size = unit(0.4, "lines"),
+    legend.text = element_text(size = 5),
+    legend.title = element_blank(),
+    legend.margin = margin(2, 2, 2, 2),
+    legend.box.margin = margin(0, 0, 0, 0),
+    legend.key.width = unit(0.4, "lines"),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
   )
+
+  ggsave("Figure 3.tiff", plot = p,
+       width = 8.4, height = 6.3, units = "cm", dpi = 1200, compression = "lzw")
+
 
 ```
 
@@ -262,21 +294,21 @@ fig3Data <- data %>%
     )
 
 fig3Data <- fig3Data %>%
-  filter(Treatment %in% c("Conspecific", "Nat Biof")) %>%
+  filter(Treatment %in% c("Conspecific", "Mussel")) %>%
   group_by(Family) %>%
   summarise(
     sumSet = sum(juvenile)
   )
 ```
 ```{r fig3Plot, echo = FALSE, fig.width=5, fig.height=4}
-ggplot(fig3Data, aes(x = Family, y = sumSet)) +
-  geom_bar(stat = "identity", fill = "darkgrey", color = "black", width = 0.3) +
+fig4 <- ggplot(fig3Data, aes(x = Family, y = sumSet)) +
+  geom_bar(stat = "identity", fill = "darkgrey", color = "black", width = 0.5, linewidth = 0.3) +
   geom_hline(yintercept = 100, linetype = "dashed", color = "black", linewidth = 0.5) +
   scale_x_continuous(breaks = 1:6) +
   scale_y_continuous(limits = c(0,200)) +
   labs(
     x = "Family",
-    y = "Summed settlement\nconspecific & field biofilm treatments (%)"
+    y = "Summed settlement\nconspecific & mussel treatments (%)"
   ) +
 
   theme_minimal() +
@@ -285,7 +317,12 @@ ggplot(fig3Data, aes(x = Family, y = sumSet)) +
     panel.border = element_blank(),
     axis.line.x = element_line(color = "black"),
     axis.line.y = element_line(color = "black"),
-    axis.text = element_text(size = 10),
-    axis.title = element_text(size = 12)
+    axis.text = element_text(size = 7, color = "black"),
+    axis.title = element_text(size = 8, margin = margin(r=3)),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA)
 )
+
+ggsave("Figure 4.tiff", plot = fig4,
+       width = 8.4, height = 6.3, units = "cm", dpi = 1200, compression = "lzw")
 ```
