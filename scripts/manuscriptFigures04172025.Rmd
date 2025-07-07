@@ -64,7 +64,7 @@ label_data <- label_data %>%
          label_y = settlement + 8,
          Treatment = fct_recode(Treatment,
                               "Conspecific" = "Conspecific",
-                              "Mussel" = "Nat Biof",
+                              "Mussel" = "Mussel",
                               "Lab biofilm" = "Lab Biof",
                               "Control" = "Control"))
   
@@ -78,25 +78,25 @@ fig1 <- ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape =
   scale_shape_manual(values = c(
     "Control" = 21,
     "Conspecific" = 16,
-    "Nat Biof" = 17,
+    "Mussel" = 17,
     "Lab Biof" = 15
   )) +
   scale_color_manual(values = c(
     "Control" = "grey60",
     "Conspecific" = "black",
-    "Nat Biof" = "grey30",
+    "Mussel" = "grey30",
     "Lab Biof" = "grey50"
   )) +
   scale_fill_manual(values = c(
     "Control" = "white",       # white fill for solid circle
     "Conspecific" = "black",
-    "Nat Biof" = "grey30",
+    "Mussel" = "grey30",
     "Lab Biof" = "grey50"
   )) +
   scale_linetype_manual(values = c(
     "Control" = "22",
     "Conspecific" = "solid",
-    "Nat Biof" = "solid",
+    "Mussel" = "solid",
     "Lab Biof" = "solid"
   )) +
   geom_text(
