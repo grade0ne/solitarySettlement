@@ -128,7 +128,7 @@ fig1 <- ggplot(fig1Data, aes(x = DPF, y = settlement, color = Treatment, shape =
 
 print(fig1)
 
-```
+ ```
 
 ```{r saveingPlots}
 
